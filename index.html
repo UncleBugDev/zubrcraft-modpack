@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ZubrCraft - Как поставить сборку и зайти на сервер</title>
   <style>
-    /* пилил ночью, не судите строго, главное работает */
+    /* пилил ночью, главное быстро и без лагов */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: #0e1113;
@@ -72,33 +72,6 @@
       border-radius: 4px;
     }
 
-    /* переключалка лаунчеров */
-    .vybor-launchera {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      background: #171b1f;
-      padding: 6px;
-      border-radius: 10px;
-      border: 1px solid #282f37;
-    }
-    .knopka-tab {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #9ca3af;
-      padding: 10px 14px;
-      font-size: 15px;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.1s;
-    }
-    .knopka-tab.active {
-      background: #282f37;
-      color: #4ade80;
-    }
-
     /* карточки с шагами */
     .shag-kartochka {
       background: #171b1f;
@@ -140,29 +113,22 @@
       margin: 14px 0;
     }
     .skachat-knopka {
-      background: #2563eb;
+      background: #16a34a;
+      border: 1px solid #22c55e;
       color: #ffffff;
       text-decoration: none;
-      padding: 12px 18px;
+      padding: 14px 22px;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 15px;
+      font-size: 16px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       transition: 0.15s;
-      border: 1px solid #3b82f6;
     }
     .skachat-knopka:hover {
-      background: #1d4ed8;
-      transform: translateY(-2px);
-    }
-    .skachat-knopka.zelenaya {
-      background: #16a34a;
-      border-color: #22c55e;
-    }
-    .skachat-knopka.zelenaya:hover {
       background: #15803d;
+      transform: translateY(-2px);
     }
 
     /* подсказки и пути */
@@ -177,21 +143,12 @@
       display: inline-block;
       margin: 4px 0;
     }
-    .vazhno-info {
-      background: #272115;
-      border-left: 4px solid #f59e0b;
-      padding: 10px 14px;
-      border-radius: 4px;
-      margin: 12px 0;
-      color: #fef3c7;
-      font-size: 14px;
-    }
     .zelenoe-info {
       background: #13241b;
       border-left: 4px solid #22c55e;
-      padding: 10px 14px;
+      padding: 12px 16px;
       border-radius: 4px;
-      margin: 12px 0;
+      margin: 14px 0;
       color: #dcfce7;
       font-size: 14px;
     }
@@ -237,7 +194,7 @@
   <!-- Шапка -->
   <div class="glav-header">
     <h1>ZubrCraft</h1>
-    <div class="podzagolovok">Гайд по установке модов для чайников. С картинками в голове и без заумных слов.</div>
+    <div class="podzagolovok">Установка модов в 2 клика. Моды сами скачиваются и обновляются прямо в игре!</div>
     
     <div class="ip-polka" onclick="skopirovatIp()" title="Кликни чтобы скопировать">
       <span>IP сервера:</span>
@@ -246,124 +203,68 @@
     </div>
   </div>
 
-  <!-- Переключалка вариантов -->
-  <div class="vybor-launchera">
-    <button class="knopka-tab active" onclick="pokazatVkladku('tlauncher')">TLauncher / Обычные</button>
-    <button class="knopka-tab" onclick="pokazatVkladku('prism')">Prism / Modrinth</button>
-    <button class="knopka-tab" onclick="pokazatVkladku('update')">Только обновить</button>
+  <!-- Шаг 1 -->
+  <div class="shag-kartochka">
+    <span class="nomer-shaga">1</span>
+    <h2>Выбираем версию в лаунчере</h2>
+    <p>Открывай свой лаунчер (TLauncher, Legacy, Prism, официальный и т.д.). В списке версий выбирай строго:</p>
+    <div class="kod-stroka">Forge 1.20.1</div>
+    <p style="margin-top: 8px;">(Чистый Forge 1.20.1, без OptiFine! Оптимизация и поддержка шейдеров уже встроены внутри сборки).</p>
   </div>
 
-  <!-- Вариант 1: Обычный лаунчер (TLauncher, Legacy и др.) -->
-  <div id="vkladka-tlauncher">
-    
-    <div class="shag-kartochka">
-      <span class="nomer-shaga">1</span>
-      <h2>Выбираем версию в лаунчере</h2>
-      <p>Открывай свой лаунчер (TLauncher, Legacy, TL и т.д.). В списке версий найди и поставь строго:</p>
-      <div class="kod-stroka">Forge 1.20.1</div>
-      <p style="margin-top: 8px;">(Если есть выбор типа Forge 47.3.11 или ForgeOptifine - выбирай <b>чистый Forge 1.20.1</b>, никакой Оптифайн нам не нужен, он всё ломает!).</p>
-    </div>
-
-    <div class="shag-kartochka">
-      <span class="nomer-shaga">2</span>
-      <h2>Скачиваем основу</h2>
-      <p>Жми кнопку ниже и качай архив. Там лежит базовая оптимизация (чтобы игра не лагала) и скрипт для автообновлений:</p>
-      <div class="knopki-ryad">
-        <a class="skachat-knopka zelenaya" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/1_ZubrCraft_Optimization_Base.zip">
-          Скачать основу (13.5 МБ)
-        </a>
-      </div>
-      <div class="vazhno-info">
-        Качается один архив с названием <b>1_ZubrCraft_Optimization_Base.zip</b>. Не распаковывай его в загрузках, читай следующий шаг.
-      </div>
-    </div>
-
-    <div class="shag-kartochka">
-      <span class="nomer-shaga">3</span>
-      <h2>Куда всё это засунуть</h2>
-      <p>Теперь надо закинуть файлы в саму игру. Делается за 5 секунд:</p>
-      <ol style="margin-left: 20px; margin-bottom: 12px;">
-        <li style="margin-bottom: 6px;">На клавиатуре нажми одновременно две кнопки: <b>Win</b> (флажок винды) и букву <b>R</b>.</li>
-        <li style="margin-bottom: 6px;">Появится маленькое окошко «Выполнить». Вставь туда вот этот текст: <div class="kod-stroka">%appdata%\.minecraft</div> и нажми <b>Enter</b>.</li>
-        <li style="margin-bottom: 6px;">Откроется папка с майнкрафтом.</li>
-        <li style="margin-bottom: 6px;">Открой скачанный архив и перетащи из него <b>папку mods</b> и файл <b>Обновить_Сборку.bat</b> прямо в эту открытую папку. Если спросит про замену файлов - соглашайся.</li>
-      </ol>
-    </div>
-
-    <div class="shag-kartochka">
-      <span class="nomer-shaga">4</span>
-      <h2>Магия одной кнопкой</h2>
-      <p>В этой же папке `.minecraft` найди файл <b>Обновить_Сборку.bat</b> и кликни по нему два раза.</p>
-      <div class="zelenoe-info">
-        Выскочит чёрное окошко, которое само проверит и за 10 секунд скачает все свежие моды нашего сервера (мебель, голосовой чат, фермерство, рюкзаки и т.д.). Когда напишет «УСПЕХ» - нажми любую клавишу.
-      </div>
-    </div>
-
-    <div class="shag-kartochka">
-      <span class="nomer-shaga">5</span>
-      <h2>Заходим играть!</h2>
-      <p>Запускай в лаунчере версию <b>Forge 1.20.1</b>. Жми «Сетевая игра» -> «По адресу» и вводи:</p>
-      <div class="kod-stroka">zubrcraft.fun</div>
-      <p style="margin-top: 8px;">В игре сразу жми клавишу <b>V</b> (английскую) - откроется настройка микрофона голосового чата. Выбери там свой рабочий микрофон.</p>
-    </div>
-
-  </div>
-
-  <!-- Вариант 2: Prism Launcher / Modrinth -->
-  <div id="vkladka-prism" style="display: none;">
-    <div class="shag-kartochka">
-      <span class="nomer-shaga">1</span>
-      <h2>Для людей с хорошим вкусом</h2>
-      <p>Если ты сидишь на Prism Launcher или Modrinth App - тебе повезло больше всех.</p>
-      <div class="knopki-ryad">
-        <a class="skachat-knopka zelenaya" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/1_ZubrCraft_Optimization_Base.zip">
-          1. Скачать базу (13 МБ)
-        </a>
-        <a class="skachat-knopka" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/2_ZubrCraft_Server_Mods.zip">
-          2. Скачать серверные моды (44 МБ)
-        </a>
-      </div>
-      <p>Создай инстанс <b>Minecraft 1.20.1</b> с загрузчиком <b>Forge 47.3.11</b>, нажми «Папка инстанса» и высыпь туда содержимое обоих архивов в папку `mods`. Заходи на <b>zubrcraft.fun</b>.</p>
+  <!-- Шаг 2 -->
+  <div class="shag-kartochka">
+    <span class="nomer-shaga">2</span>
+    <h2>Скачиваем основу с авто-апдейтером</h2>
+    <p>Жми зеленую кнопку и скачай стартовый архив. Там лежит мод <b>AutoModpack</b> и оптимизация для высокого FPS:</p>
+    <div class="knopki-ryad">
+      <a class="skachat-knopka" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/1_ZubrCraft_Optimization_Base.zip">
+        Скачать сборку (27 МБ)
+      </a>
     </div>
   </div>
 
-  <!-- Вариант 3: Только обновить -->
-  <div id="vkladka-update" style="display: none;">
-    <div class="shag-kartochka">
-      <span class="nomer-shaga">⚡</span>
-      <h2>Как обновиться если мы добавили моды</h2>
-      <p>Тебе вообще ничего не нужно качать вручную из браузера!</p>
-      <ol style="margin-left: 20px; margin-bottom: 12px;">
-        <li style="margin-bottom: 6px;">Иди в свою папку <b>.minecraft</b>.</li>
-        <li style="margin-bottom: 6px;">Запусти файлик <b>Обновить_Сборку.bat</b>.</li>
-        <li style="margin-bottom: 6px;">Скрипт за пару секунд сам стянет свежие файлы с нашего GitHub и удалит старье.</li>
-      </ol>
-      <p>Если ты случайно удалил этот батник - скачай его заново из архива основы наверху.</p>
-    </div>
+  <!-- Шаг 3 -->
+  <div class="shag-kartochka">
+    <span class="nomer-shaga">3</span>
+    <h2>Распаковываем в папку игры</h2>
+    <ol style="margin-left: 20px; margin-bottom: 12px;">
+      <li style="margin-bottom: 6px;">На клавиатуре нажми одновременно: <b>Win</b> (кнопка с флажком) и букву <b>R</b>.</li>
+      <li style="margin-bottom: 6px;">В появившемся окне вставь: <div class="kod-stroka">%appdata%\.minecraft</div> и нажми <b>Enter</b>.</li>
+      <li style="margin-bottom: 6px;">Открой скачанный архив и просто перетащи из него <b>папку mods</b> в открывшуюся папку `.minecraft`. Если спросит про замену файлов - подтверждай.</li>
+    </ol>
   </div>
 
-  <!-- Блок частых затупов (FAQ) -->
+  <!-- Шаг 4 -->
+  <div class="shag-kartochka">
+    <span class="nomer-shaga">4</span>
+    <h2>Заходим в игру и смотрим магию!</h2>
+    <p>Запускай версию <b>Forge 1.20.1</b>. Заходи в «Сетевая игра» -> «По адресу» и пиши:</p>
+    <div class="kod-stroka">zubrcraft.fun</div>
+    <div class="zelenoe-info">
+      <b>Как работает автообновление:</b><br>
+      При первом подключении встроенный мод AutoModpack сам покажет шкалу загрузки на экране Minecraft, за 10-15 секунд скачает недостающие моды сервера и перезапустит игру. Когда мы добавим новые моды на сервер - тебе ничего не придется перекачивать, игра сама всё обновит прямо на лету!
+    </div>
+    <p>В игре нажми клавишу <b>V</b> (английскую), чтобы настроить микрофон для голосового чата.</p>
+  </div>
+
+  <!-- Блок вопросов и ответов -->
   <div class="faq-shtuka">
-    <h3 style="color: #f3f4f6; margin-bottom: 14px; font-size: 18px;">Что делать если что-то пошло не так</h3>
+    <h3 style="color: #f3f4f6; margin-bottom: 14px; font-size: 18px;">Частые вопросы и проблемы</h3>
     
     <div class="faq-punkt">
-      <div class="faq-vopros">Игра крашится при запуске или вылетает с ошибкой памяти?</div>
-      <p>В настройках лаунчера поставь выделение памяти хотя бы на <b>3500 - 4000 МБ (4 ГБ)</b>. Если стоит 1 ГБ - майнкрафт с модами просто задохнётся.</p>
+      <div class="faq-vopros">Игра вылетает при запуске или зависает?</div>
+      <p>В настройках лаунчера выдели игре <b>не менее 4 ГБ (4000 МБ) оперативной памяти</b>. На 1-2 ГБ сборка с модами не запустится.</p>
     </div>
 
     <div class="faq-punkt">
-      <div class="faq-vopros">Не работает микрофон и я никого не слышу?</div>
-      <p>В игре нажми клавишу <b>V</b> (русскую М). Там шестеренка настроек: проверь, что микрофон выбран именно твой, а не наушники или веб-камера.</p>
-    </div>
-
-    <div class="faq-punkt">
-      <div class="faq-vopros">Пишет «Несовместимый список модов» (Incompatible mod list)?</div>
-      <p>Это значит, что на сервере обновились моды, а у тебя осталась старая версия. Закрой майнкрафт, запусти <b>Обновить_Сборку.bat</b> и заходи снова.</p>
+      <div class="faq-vopros">Не работает голосовой чат?</div>
+      <p>В игре нажми клавишу <b>V</b>. Там в настройках выбери правильный микрофон и режим активации (по голосу или по кнопке).</p>
     </div>
 
     <div class="faq-punkt">
       <div class="faq-vopros">Где включить шейдеры?</div>
-      <p>В сборку уже встроен Oculus (аналог Iris). Заходи в Настройки -> Настройки графики -> Наборы шейдеров, кидай туда любой архив с шейдерами и включай.</p>
+      <p>В сборку уже встроен Oculus (аналог Iris). Заходи в Настройки -> Настройки графики -> Наборы шейдеров, кидай любой архив с шейдерами и включай.</p>
     </div>
   </div>
 
@@ -389,28 +290,6 @@
     }).catch(function() {
       alert("Не получилось скопировать автоматически, адрес: " + ip);
     });
-  }
-
-  function pokazatVkladku(id) {
-    document.getElementById("vkladka-tlauncher").style.display = "none";
-    document.getElementById("vkladka-prism").style.display = "none";
-    document.getElementById("vkladka-update").style.display = "none";
-
-    var tabs = document.querySelectorAll(".knopka-tab");
-    for (var i = 0; i < tabs.length; i++) {
-      tabs[i].classList.remove("active");
-    }
-
-    if (id === "tlauncher") {
-      document.getElementById("vkladka-tlauncher").style.display = "block";
-      tabs[0].classList.add("active");
-    } else if (id === "prism") {
-      document.getElementById("vkladka-prism").style.display = "block";
-      tabs[1].classList.add("active");
-    } else if (id === "update") {
-      document.getElementById("vkladka-update").style.display = "block";
-      tabs[2].classList.add("active");
-    }
   }
 </script>
 
