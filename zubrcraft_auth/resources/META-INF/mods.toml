@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="zubrcraft_auth"
+version="1.0.0"
+displayName="ZubrCraft Auth"
+description="Custom secure GUI authentication for ZubrCraft"
+authors="UncleBug, ZubrCraft Team"
+logoFile="mod_icon.png"
+
+[[dependencies.zubrcraft_auth]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1]"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.zubrcraft_auth]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
