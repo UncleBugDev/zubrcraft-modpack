@@ -46,28 +46,28 @@ public class AuthScreen extends Screen {
 
         int centerX = this.f_96543_ / 2;
         int centerY = this.f_96544_ / 2;
-        int boxW = 200;
+        int totalW = 200;
         int boxH = 20;
 
-        int startY = centerY - (this.mode == 0 ? 80 : 60);
+        int startY = centerY - (this.mode == 0 ? 82 : 62);
 
-        // Password input box
-        this.passwordBox = new EditBox(this.f_96547_, centerX - boxW / 2, startY + 50, boxW - 26, boxH, Component.m_237113_("Пароль"));
+        // Password input box (width 150)
+        this.passwordBox = new EditBox(this.f_96547_, centerX - totalW / 2, startY + 50, 148, boxH, Component.m_237113_("Пароль"));
         this.passwordBox.m_94199_(64);
         setupMasking(this.passwordBox);
         this.m_142416_(this.passwordBox);
 
-        // Toggle show password button
-        this.toggleShowButton = Button.m_253074_(Component.m_237113_(this.showPassword ? "👁" : "🔒"), b -> {
+        // Toggle show password button (width 48, text "Показ" / "Скрыть")
+        this.toggleShowButton = Button.m_253074_(Component.m_237113_(this.showPassword ? "Скрыть" : "Показ"), b -> {
             this.showPassword = !this.showPassword;
-            b.m_93666_(Component.m_237113_(this.showPassword ? "👁" : "🔒"));
-        }).m_252987_(centerX + boxW / 2 - 22, startY + 50, 22, 20).m_253136_();
+            b.m_93666_(Component.m_237113_(this.showPassword ? "Скрыть" : "Показ"));
+        }).m_252987_(centerX - totalW / 2 + 152, startY + 50, 48, 20).m_253136_();
         this.m_142416_(this.toggleShowButton);
 
         int currentY = startY + 50 + boxH + 8;
 
-        if (this.mode == 0) { // REGISTER: confirm password box
-            this.confirmBox = new EditBox(this.f_96547_, centerX - boxW / 2, currentY + 12, boxW, boxH, Component.m_237113_("Повторите пароль"));
+        if (this.mode == 0) { // REGISTER: confirm password box (full 200 width)
+            this.confirmBox = new EditBox(this.f_96547_, centerX - totalW / 2, currentY + 12, totalW, boxH, Component.m_237113_("Повторите пароль"));
             this.confirmBox.m_94199_(64);
             setupMasking(this.confirmBox);
             this.m_142416_(this.confirmBox);
@@ -79,16 +79,17 @@ public class AuthScreen extends Screen {
 
         // Submit button
         Component submitText = Component.m_237113_(this.mode == 0 ? "Зарегистрироваться" : "Войти на сервер");
-        this.submitButton = Button.m_253074_(submitText, b -> doSubmit()).m_252987_(centerX - boxW / 2, currentY, boxW, boxH).m_253136_();
+        this.submitButton = Button.m_253074_(submitText, b -> doSubmit()).m_252987_(centerX - totalW / 2, currentY, totalW, boxH).m_253136_();
         this.m_142416_(this.submitButton);
         currentY += boxH + 6;
 
         // Leave button
-        this.leaveButton = Button.m_253074_(Component.m_237113_("Отключиться"), b -> doLeave()).m_252987_(centerX - boxW / 2, currentY, boxW, boxH).m_253136_();
+        this.leaveButton = Button.m_253074_(Component.m_237113_("Отключиться"), b -> doLeave()).m_252987_(centerX - totalW / 2, currentY, totalW, boxH).m_253136_();
         this.m_142416_(this.leaveButton);
 
-        // Initial focus
+        // Initial focus on passwordBox
         this.passwordBox.m_93692_(true);
+        this.m_7522_(this.passwordBox);
     }
 
     private void setupMasking(EditBox box) {
@@ -128,6 +129,17 @@ public class AuthScreen extends Screen {
     }
 
     @Override
+    public boolean m_5534_(char codePoint, int modifiers) { // charTyped
+        if (this.passwordBox != null && this.passwordBox.m_93696_()) {
+            return this.passwordBox.m_5534_(codePoint, modifiers);
+        }
+        if (this.confirmBox != null && this.confirmBox.m_93696_()) {
+            return this.confirmBox.m_5534_(codePoint, modifiers);
+        }
+        return super.m_5534_(codePoint, modifiers);
+    }
+
+    @Override
     public boolean m_7933_(int keyCode, int scanCode, int modifiers) { // keyPressed
         if (keyCode == 257 || keyCode == 335) { // Enter or NumPad Enter
             doSubmit();
@@ -138,15 +150,23 @@ public class AuthScreen extends Screen {
                 if (this.passwordBox.m_93696_()) {
                     this.passwordBox.m_93692_(false);
                     this.confirmBox.m_93692_(true);
+                    this.m_7522_(this.confirmBox);
                 } else {
                     this.confirmBox.m_93692_(false);
                     this.passwordBox.m_93692_(true);
+                    this.m_7522_(this.passwordBox);
                 }
                 return true;
             }
         }
         if (keyCode == 256) { // Esc
             return true; // Ignore Esc to keep screen open
+        }
+        if (this.passwordBox != null && this.passwordBox.m_93696_()) {
+            if (this.passwordBox.m_7933_(keyCode, scanCode, modifiers)) return true;
+        }
+        if (this.confirmBox != null && this.confirmBox.m_93696_()) {
+            if (this.confirmBox.m_7933_(keyCode, scanCode, modifiers)) return true;
         }
         return super.m_7933_(keyCode, scanCode, modifiers);
     }
@@ -196,7 +216,7 @@ public class AuthScreen extends Screen {
         }
 
         // Labels
-        int startY = centerY - (this.mode == 0 ? 80 : 60);
+        int startY = centerY - (this.mode == 0 ? 82 : 62);
         guiGraphics.m_280056_(this.f_96547_, "Пароль:", centerX - 100, startY + 39, 0xFFAAAAAA, false);
 
         if (this.mode == 0) {

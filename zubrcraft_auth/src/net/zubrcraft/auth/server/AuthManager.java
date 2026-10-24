@@ -9,6 +9,8 @@ import net.minecraftforge.network.PacketDistributor;
 import net.zubrcraft.auth.ZubrCraftAuth;
 import net.zubrcraft.auth.network.AuthPromptPacket;
 import net.zubrcraft.auth.network.AuthResultPacket;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileReader;
@@ -23,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthManager {
+    private static final Logger LOGGER = LogManager.getLogger("ZubrCraftAuth");
     private static final AuthManager INSTANCE = new AuthManager();
     public static AuthManager getInstance() { return INSTANCE; }
 
@@ -60,9 +63,9 @@ public class AuthManager {
                     users.putAll(loaded);
                 }
             }
-            ZubrCraftAuth.LOGGER.info("Loaded " + users.size() + " registered users.");
+            LOGGER.info("Loaded " + users.size() + " registered users.");
         } catch (Exception e) {
-            ZubrCraftAuth.LOGGER.error("Failed to load users from " + configFile, e);
+            LOGGER.error("Failed to load users from " + configFile, e);
         }
     }
 
@@ -73,13 +76,22 @@ public class AuthManager {
                 gson.toJson(users, writer);
             }
         } catch (Exception e) {
-            ZubrCraftAuth.LOGGER.error("Failed to save users to " + configFile, e);
+            LOGGER.error("Failed to save users to " + configFile, e);
         }
+    }
+
+    public Map<String, UserData> getUsers() {
+        return users;
     }
 
     public boolean isAuthenticated(ServerPlayer player) {
         if (player == null) return false;
         return authenticatedPlayers.contains(player.m_20148_());
+    }
+
+    public boolean isAuthenticatedUUID(UUID uuid) {
+        if (uuid == null) return false;
+        return authenticatedPlayers.contains(uuid);
     }
 
     public void removePlayer(ServerPlayer player) {
@@ -137,24 +149,22 @@ public class AuthManager {
         }
     }
 
-    public void handleAuthSubmit(ServerPlayer player, int mode, String password, String confirm) {
-        String username = player.m_36316_().getName().toLowerCase(Locale.ROOT);
-        String currentIp = getPlayerIP(player);
-        UserData user = users.get(username);
-        UUID uuid = player.m_20148_();
+    public boolean processAuth(UUID uuid, String username, String currentIp, int mode, String password, String confirm, StringBuilder errorOut) {
+        String userKey = username.toLowerCase(Locale.ROOT);
+        UserData user = users.get(userKey);
 
         if (mode == 0) { // REGISTER
             if (user != null) {
-                sendPrompt(player, 1, "§cАккаунт уже зарегистрирован! Введите пароль.");
-                return;
+                if (errorOut != null) errorOut.append("§cАккаунт уже зарегистрирован! Введите пароль.");
+                return false;
             }
             if (password == null || password.trim().length() < 4) {
-                sendPrompt(player, 0, "§cПароль должен быть не менее 4 символов!");
-                return;
+                if (errorOut != null) errorOut.append("§cПароль должен быть не менее 4 символов!");
+                return false;
             }
             if (!password.equals(confirm)) {
-                sendPrompt(player, 0, "§cПароли не совпадают!");
-                return;
+                if (errorOut != null) errorOut.append("§cПароли не совпадают!");
+                return false;
             }
 
             user = new UserData();
@@ -163,16 +173,15 @@ public class AuthManager {
             user.lastIp = currentIp;
             user.registeredAt = System.currentTimeMillis();
             user.lastLogin = user.registeredAt;
-            users.put(username, user);
+            users.put(userKey, user);
             saveUsers();
 
             authenticatedPlayers.add(uuid);
-            sendResult(player, true, "Регистрация успешна!");
-            player.m_213846_(Component.m_237113_("§a[ZubrCraft] Регистрация успешна! Добро пожаловать, " + player.m_36316_().getName() + "!"));
+            return true;
         } else if (mode == 1) { // LOGIN
             if (user == null) {
-                sendPrompt(player, 0, "§cАккаунт не найден! Пожалуйста, зарегистрируйтесь.");
-                return;
+                if (errorOut != null) errorOut.append("§cАккаунт не найден! Пожалуйста, зарегистрируйтесь.");
+                return false;
             }
 
             String computed = hashPassword(password, user.salt);
@@ -183,16 +192,42 @@ public class AuthManager {
 
                 authenticatedPlayers.add(uuid);
                 attempts.remove(uuid);
-                sendResult(player, true, "Авторизация успешна!");
-                player.m_213846_(Component.m_237113_("§a[ZubrCraft] Вы успешно вошли! Приятной игры."));
+                return true;
             } else {
                 int count = attempts.getOrDefault(uuid, 0) + 1;
                 attempts.put(uuid, count);
-                if (count >= 5) {
-                    player.f_8906_.m_9942_(Component.m_237113_("§cПревышено количество попыток ввода пароля."));
-                } else {
-                    sendPrompt(player, 1, "§cНеверный пароль! Осталось попыток: " + (5 - count));
+                if (errorOut != null) {
+                    if (count >= 5) {
+                        errorOut.append("§cПревышено количество попыток ввода пароля.");
+                    } else {
+                        errorOut.append("§cНеверный пароль! Осталось попыток: " + (5 - count));
+                    }
                 }
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public void handleAuthSubmit(ServerPlayer player, int mode, String password, String confirm) {
+        String username = player.m_36316_().getName();
+        String currentIp = getPlayerIP(player);
+        UUID uuid = player.m_20148_();
+        StringBuilder error = new StringBuilder();
+
+        boolean ok = processAuth(uuid, username, currentIp, mode, password, confirm, error);
+        if (ok) {
+            sendResult(player, true, mode == 0 ? "Регистрация успешна!" : "Авторизация успешна!");
+            if (mode == 0) {
+                player.m_213846_(Component.m_237113_("§a[ZubrCraft] Регистрация успешна! Добро пожаловать, " + username + "!"));
+            } else {
+                player.m_213846_(Component.m_237113_("§a[ZubrCraft] Вы успешно вошли! Приятной игры."));
+            }
+        } else {
+            if (attempts.getOrDefault(uuid, 0) >= 5) {
+                player.f_8906_.m_9942_(Component.m_237113_(error.toString()));
+            } else {
+                sendPrompt(player, mode, error.toString());
             }
         }
     }
@@ -201,7 +236,7 @@ public class AuthManager {
         if (!isAuthenticated(player)) {
             long now = System.currentTimeMillis();
             long last = lastPromptSent.getOrDefault(player.m_20148_(), 0L);
-            if (now - last > 3000) { // every 3 seconds if not authenticated, ensure screen is open
+            if (now - last > 3000) {
                 String username = player.m_36316_().getName().toLowerCase(Locale.ROOT);
                 int mode = users.containsKey(username) ? 1 : 0;
                 sendPrompt(player, mode, "");
@@ -218,7 +253,7 @@ public class AuthManager {
         ZubrCraftAuth.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new AuthResultPacket(success, message));
     }
 
-    private static String hashPassword(String password, String salt) {
+    public static String hashPassword(String password, String salt) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] b = md.digest((password + salt).getBytes(StandardCharsets.UTF_8));
@@ -232,7 +267,7 @@ public class AuthManager {
         }
     }
 
-    private static String generateSalt() {
+    public static String generateSalt() {
         byte[] b = new byte[16];
         new SecureRandom().nextBytes(b);
         StringBuilder sb = new StringBuilder();
