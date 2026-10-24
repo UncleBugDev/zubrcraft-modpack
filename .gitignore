@@ -1,0 +1,13 @@
+.env
+.secrets
+*.key
+*.token
+*.jar
+*.zip
+*.class
+*.pyc
+__pycache__/
+build_optimization/
+extracted_*.json
+mod_icon.png
+favicon.svg
