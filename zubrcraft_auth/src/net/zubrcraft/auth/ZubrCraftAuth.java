@@ -1,8 +1,10 @@
 package net.zubrcraft.auth;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -33,6 +35,7 @@ public class ZubrCraftAuth {
         modBus.addListener(this::setup);
 
         MinecraftForge.EVENT_BUS.register(new ServerAuthEvents());
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MinecraftForge.EVENT_BUS.register(new net.zubrcraft.auth.client.ClientAuthEvents()));
         LOGGER.info("ZubrCraft Auth mod initialized!");
     }
 

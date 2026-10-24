@@ -4,7 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.PacketDistributor;
 import net.zubrcraft.auth.ZubrCraftAuth;
 import net.zubrcraft.auth.network.AuthPromptPacket;
@@ -41,6 +48,11 @@ public class AuthManager {
     private final Set<UUID> authenticatedPlayers = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Integer> attempts = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastPromptSent = new ConcurrentHashMap<>();
+    private final Map<UUID, Vec3> pendingPositions = new ConcurrentHashMap<>();
+    private final Map<UUID, Float> pendingYaws = new ConcurrentHashMap<>();
+    private final Map<UUID, Float> pendingPitches = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> joinTimes = new ConcurrentHashMap<>();
+
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final File configFile = new File("config/zubrcraft_auth/users.json");
 
@@ -94,11 +106,76 @@ public class AuthManager {
         return authenticatedPlayers.contains(uuid);
     }
 
+    public Vec3 getJoinPosition(UUID uuid) {
+        return pendingPositions.get(uuid);
+    }
+
+    public float getJoinYaw(UUID uuid) {
+        Float val = pendingYaws.get(uuid);
+        return val != null ? val : 0.0f;
+    }
+
+    public float getJoinPitch(UUID uuid) {
+        Float val = pendingPitches.get(uuid);
+        return val != null ? val : 0.0f;
+    }
+
+    public long getJoinTime(UUID uuid) {
+        Long val = joinTimes.get(uuid);
+        return val != null ? val : 0L;
+    }
+
+    public void onAuthenticated(ServerPlayer player) {
+        if (player == null) return;
+        UUID uuid = player.m_20148_();
+        authenticatedPlayers.add(uuid);
+        pendingPositions.remove(uuid);
+        pendingYaws.remove(uuid);
+        pendingPitches.remove(uuid);
+        joinTimes.remove(uuid);
+        attempts.remove(uuid);
+        lastPromptSent.remove(uuid);
+
+        // Remove blindness effect
+        player.m_21195_(MobEffects.f_19610_);
+    }
+
+    public void sendWelcome(ServerPlayer player) {
+        if (player == null) return;
+        String name = player.m_36316_().getName();
+
+        try {
+            // 1. Title & Subtitle with smooth fade animation
+            player.f_8906_.m_9829_(new ClientboundSetTitlesAnimationPacket(10, 60, 20));
+            player.f_8906_.m_9829_(new ClientboundSetTitleTextPacket(Component.m_237113_("§6§l★ ZubrCraft ★")));
+            player.f_8906_.m_9829_(new ClientboundSetSubtitleTextPacket(Component.m_237113_("§fДобро пожаловать, §e" + name + "§f!")));
+
+            // 2. Play level-up chime sound locally for player
+            player.m_5496_(SoundEvents.f_12275_, 0.7f, 1.2f);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to send title/sound: " + e.getMessage());
+        }
+
+        // 3. Beautiful private chat banner (visible ONLY to this player)
+        player.m_213846_(Component.m_237113_("§6§m--------------------------------------------------"));
+        player.m_213846_(Component.m_237113_("§e       ★ §6§lДОБРО ПОЖАЛОВАТЬ НА ZUBRCRAFT §e★"));
+        player.m_213846_(Component.m_237113_("§7  • Игрок: §f" + name));
+        player.m_213846_(Component.m_237113_("§7  • Сайт сервера: §fhttps://zubrcraft.fun"));
+        player.m_213846_(Component.m_237113_("§7  • Голосовой чат: нажмите клавишу §e[V]§7 или §e[H]"));
+        player.m_213846_(Component.m_237113_("§7  • Желаем приятной и комфортной игры!"));
+        player.m_213846_(Component.m_237113_("§6§m--------------------------------------------------"));
+    }
+
     public void removePlayer(ServerPlayer player) {
         if (player != null) {
-            authenticatedPlayers.remove(player.m_20148_());
-            attempts.remove(player.m_20148_());
-            lastPromptSent.remove(player.m_20148_());
+            UUID uuid = player.m_20148_();
+            authenticatedPlayers.remove(uuid);
+            pendingPositions.remove(uuid);
+            pendingYaws.remove(uuid);
+            pendingPitches.remove(uuid);
+            joinTimes.remove(uuid);
+            attempts.remove(uuid);
+            lastPromptSent.remove(uuid);
         }
     }
 
@@ -128,21 +205,28 @@ public class AuthManager {
         String currentIp = getPlayerIP(player);
         UUID uuid = player.m_20148_();
 
-        if (user == null) {
-            authenticatedPlayers.remove(uuid);
-            sendPrompt(player, 0, "");
-            player.m_213846_(Component.m_237113_("§e[ZubrCraft] Пожалуйста, зарегистрируйтесь через появившееся окно!"));
+        if (user != null && currentIp.equals(user.lastIp)) {
+            // Same IP: Seamless automatic background authentication!
+            onAuthenticated(player);
+            user.lastLogin = System.currentTimeMillis();
+            saveUsers();
+            sendResult(player, true, "Авторизация успешна!");
+            sendWelcome(player);
         } else {
-            if (currentIp.equals(user.lastIp)) {
-                // Same IP: Seamless automatic background authentication!
-                authenticatedPlayers.add(uuid);
-                user.lastLogin = System.currentTimeMillis();
-                saveUsers();
-                sendResult(player, true, "Авторизация успешна!");
-                player.m_213846_(Component.m_237113_("§a[ZubrCraft] С возвращением, " + player.m_36316_().getName() + "! Вы успешно авторизованы (по IP)."));
+            // Unauthenticated: lock and prompt
+            authenticatedPlayers.remove(uuid);
+            pendingPositions.put(uuid, player.m_20182_());
+            pendingYaws.put(uuid, player.m_146908_());
+            pendingPitches.put(uuid, player.m_146909_());
+            joinTimes.put(uuid, System.currentTimeMillis());
+
+            // Apply blindness
+            player.m_7292_(new MobEffectInstance(MobEffects.f_19610_, 20 * 120, 1, false, false, false));
+
+            if (user == null) {
+                sendPrompt(player, 0, "");
+                player.m_213846_(Component.m_237113_("§e[ZubrCraft] Пожалуйста, зарегистрируйтесь через появившееся окно!"));
             } else {
-                // Different IP: Prompt for password via GUI
-                authenticatedPlayers.remove(uuid);
                 sendPrompt(player, 1, "Вход с нового IP адреса (" + currentIp + ")");
                 player.m_213846_(Component.m_237113_("§e[ZubrCraft] Обнаружен вход с нового IP (" + currentIp + "). Пожалуйста, введите пароль."));
             }
@@ -176,7 +260,6 @@ public class AuthManager {
             users.put(userKey, user);
             saveUsers();
 
-            authenticatedPlayers.add(uuid);
             return true;
         } else if (mode == 1) { // LOGIN
             if (user == null) {
@@ -190,8 +273,6 @@ public class AuthManager {
                 user.lastLogin = System.currentTimeMillis();
                 saveUsers();
 
-                authenticatedPlayers.add(uuid);
-                attempts.remove(uuid);
                 return true;
             } else {
                 int count = attempts.getOrDefault(uuid, 0) + 1;
@@ -217,12 +298,9 @@ public class AuthManager {
 
         boolean ok = processAuth(uuid, username, currentIp, mode, password, confirm, error);
         if (ok) {
+            onAuthenticated(player);
             sendResult(player, true, mode == 0 ? "Регистрация успешна!" : "Авторизация успешна!");
-            if (mode == 0) {
-                player.m_213846_(Component.m_237113_("§a[ZubrCraft] Регистрация успешна! Добро пожаловать, " + username + "!"));
-            } else {
-                player.m_213846_(Component.m_237113_("§a[ZubrCraft] Вы успешно вошли! Приятной игры."));
-            }
+            sendWelcome(player);
         } else {
             if (attempts.getOrDefault(uuid, 0) >= 5) {
                 player.f_8906_.m_9942_(Component.m_237113_(error.toString()));

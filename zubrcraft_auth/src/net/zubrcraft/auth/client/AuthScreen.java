@@ -29,11 +29,15 @@ public class AuthScreen extends Screen {
     }
 
     public void updatePrompt(int mode, String message) {
-        this.mode = mode;
-        if (message != null && !message.isEmpty()) {
+        if (this.mode != mode) {
+            this.mode = mode;
+            if (message != null && !message.isEmpty()) {
+                this.statusMessage = message;
+            }
+            this.m_7856_();
+        } else if (message != null && !message.isEmpty()) {
             this.statusMessage = message;
         }
-        this.m_7856_();
     }
 
     public void setStatusMessage(String message) {
@@ -42,6 +46,10 @@ public class AuthScreen extends Screen {
 
     @Override
     protected void m_7856_() { // init
+        String savedPass = this.passwordBox != null ? this.passwordBox.m_94155_() : "";
+        String savedConfirm = this.confirmBox != null ? this.confirmBox.m_94155_() : "";
+        boolean confirmFocused = this.confirmBox != null && this.confirmBox.m_93696_();
+
         this.m_169413_(); // clearWidgets
 
         int centerX = this.f_96543_ / 2;
@@ -55,12 +63,19 @@ public class AuthScreen extends Screen {
         this.passwordBox = new EditBox(this.f_96547_, centerX - totalW / 2, startY + 50, 148, boxH, Component.m_237113_("Пароль"));
         this.passwordBox.m_94199_(64);
         setupMasking(this.passwordBox);
+        if (!savedPass.isEmpty()) {
+            this.passwordBox.m_94144_(savedPass);
+        }
         this.m_142416_(this.passwordBox);
 
         // Toggle show password button (width 48, text "Показ" / "Скрыть")
         this.toggleShowButton = Button.m_253074_(Component.m_237113_(this.showPassword ? "Скрыть" : "Показ"), b -> {
             this.showPassword = !this.showPassword;
             b.m_93666_(Component.m_237113_(this.showPassword ? "Скрыть" : "Показ"));
+            setupMasking(this.passwordBox);
+            if (this.confirmBox != null) {
+                setupMasking(this.confirmBox);
+            }
         }).m_252987_(centerX - totalW / 2 + 152, startY + 50, 48, 20).m_253136_();
         this.m_142416_(this.toggleShowButton);
 
@@ -70,6 +85,9 @@ public class AuthScreen extends Screen {
             this.confirmBox = new EditBox(this.f_96547_, centerX - totalW / 2, currentY + 12, totalW, boxH, Component.m_237113_("Повторите пароль"));
             this.confirmBox.m_94199_(64);
             setupMasking(this.confirmBox);
+            if (!savedConfirm.isEmpty()) {
+                this.confirmBox.m_94144_(savedConfirm);
+            }
             this.m_142416_(this.confirmBox);
             currentY += 12 + boxH + 12;
         } else {
@@ -87,9 +105,14 @@ public class AuthScreen extends Screen {
         this.leaveButton = Button.m_253074_(Component.m_237113_("Отключиться"), b -> doLeave()).m_252987_(centerX - totalW / 2, currentY, totalW, boxH).m_253136_();
         this.m_142416_(this.leaveButton);
 
-        // Initial focus on passwordBox
-        this.passwordBox.m_93692_(true);
-        this.m_7522_(this.passwordBox);
+        // Focus restoration
+        if (confirmFocused && this.confirmBox != null) {
+            this.confirmBox.m_93692_(true);
+            this.m_7522_(this.confirmBox);
+        } else {
+            this.passwordBox.m_93692_(true);
+            this.m_7522_(this.passwordBox);
+        }
     }
 
     private void setupMasking(EditBox box) {
@@ -173,6 +196,11 @@ public class AuthScreen extends Screen {
 
     @Override
     public boolean m_6913_() { // shouldCloseOnEsc
+        return false;
+    }
+
+    @Override
+    public boolean m_7043_() { // isPauseScreen
         return false;
     }
 

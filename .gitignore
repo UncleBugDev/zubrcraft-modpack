@@ -1,13 +1,41 @@
+# Environments & Secrets
 .env
-.secrets
+.secrets/
 *.key
 *.token
+
+# Temporary archives & build artifacts
 *.jar
 *.zip
+*.tar.gz
 *.class
 *.pyc
 __pycache__/
+client_staging/
+test_sync_sandbox/
+decompiled_*/
+generated_*/
 build_optimization/
-extracted_*.json
-mod_icon.png
-favicon.svg
+accprotector_src/
+
+# Configs & scratch data
+*.json
+*.py
+*.txt
+*.dat
+*.properties
+*.toml
+*.png
+*.webp
+*.conf
+*.cfg
+*.svg
+
+# Whitelist allowed root files
+!README.md
+!index.html
+!zubrcraft_edition.png
+!.gitignore
+
+# Whitelist zubrcraft_auth files
+!zubrcraft_auth/**
