@@ -1,33 +1,86 @@
-# Папка контекста проекта ZubrCraft для Claude / других ИИ
+# Полный контекст и проект ZubrCraft для Claude / других ИИ
 
-Эта папка создана для того, чтобы ты мог передать любой нейросети (например, **Claude 3.5 Sonnet / Claude Projects**, ChatGPT или другим агентам) полный контекст нашего сервера Minecraft, инфраструктуры и правил разработки.
-
----
-
-## 📁 Структура папки
-
-- **`CLAUDE_PROMPT.md`** - Главный системный контекст для Claude. В нём подробно описаны:
-  - Версия Minecraft (`1.20.1`), загрузчик (`Forge 47.3.11`), Java 17.
-  - Список всех 41 модов с категориями (геймплей, декор, оптимизация, сервер).
-  - Схема авто-синхронизации модов (Pre-Launch sync через CDN `sync.zubrcraft.fun`).
-  - Правила написания кастомных модов (клиент-серверное разделение, сетевые пакеты, пример `zubrcraft_auth`).
-- **`SERVER_ARCHITECTURE.md`** - Полная техническая шпаргалка по серверу:
-  - IP-адреса, порты (25565, 24454 UDP, 8085), Playit Anycast туннель, Cloudflare CDN.
-  - Службы `systemd`, пути к файлам на Ubuntu-сервере, команды управления.
-- **`MOD_DEVELOPMENT_TEMPLATE.md`** - Готовый шаблон и скелет для разработки мода под Forge 1.20.1 (Gradle, `mods.toml`, аннотации, сетевые пакеты).
-- **`CHATS/`** - Специальная папка для твоих диалогов! Сюда можно скидывать сохранённые чаты (в `.txt` или `.md`), чтобы Claude их видел и учился на них.
+Эта папка содержит исчерпывающие исходные файлы, конфигурации, архитектуру и рабочие инструменты для создания, сборки, деплоя и тестирования модов сервера Minecraft **ZubrCraft**.
 
 ---
 
-## 🚀 Как использовать с Claude
+## 📁 Структура каталога
 
-### Вариант 1: Через Claude Projects (Самый удобный)
-1. В веб-интерфейсе Claude создай новый **Project** (например, «ZubrCraft Mods»).
-2. В раздел **Project Knowledge** перетащи всю папку `AI_CONTEXT` (или файлы из неё).
-3. В **Custom Instructions** вставь краткую ссылку:
-   > "Ты ведущий Java-разработчик модов для сервера Minecraft ZubrCraft (1.20.1 Forge). Используй всю информацию из Project Knowledge."
-4. Задавай Claude любые задачи по созданию новых модов, конфигов или механик.
+```text
+AI_CONTEXT/
+├── README.md                      # Данный путеводитель
+├── CLAUDE_PROMPT.md               # Главный системный промпт для Claude
+├── SERVER_ARCHITECTURE.md         # Детальная архитектура сетей, портов и служб
+├── MOD_DEVELOPMENT_TEMPLATE.md    # Шаблон и сниппеты для разработки мода Forge 1.20.1
+│
+├── CHATS/                         # Сюда складывать экспорты чатов с нейросетями (.txt / .md)
+│   └── README.md
+│
+└── PROJECT_FILES/                 # ИСХОДНЫЕ ФАЙЛЫ И ИНСТРУМЕНТЫ ПРОЕКТА
+    ├── zubrcraft_auth/            # Полный исходный код нашего кастомного мода авторизации
+    │   ├── src/net/zubrcraft/auth/
+    │   │   ├── ZubrCraftAuth.java (главный класс @Mod)
+    │   │   ├── client/AuthScreen.java (кастомный GUI логина)
+    │   │   ├── server/AuthManager.java (хэширование SHA-256)
+    │   │   └── network/ (клиент-серверные пакеты)
+    │   ├── resources/META-INF/mods.toml
+    │   └── pack.mcmeta
+    │
+    ├── client/                    # Конфиги клиентской части
+    │   ├── instance.cfg           # Конфигурация лаунчера Prism Launcher
+    │   ├── sync.ps1               # Клиентский скрипт авто-синхронизации модов (PreLaunch)
+    │   └── servers.dat            # Настроенный список серверов (Основной и Резервный)
+    │
+    ├── server/                    # Конфиги сервера
+    │   ├── server.properties      # Настройки Forge-сервера
+    │   ├── update_sync.py         # Скрипт индексации CDN манифеста
+    │   ├── config/                # Конфигурации серверных модов
+    │   │   ├── tab/               # Настройки мода TAB (config.yml, animations.yml, users.yml)
+    │   │   └── minimotd/          # Настройки градиентного MOTD (main.conf)
+    │   └── systemd/               # Службы Ubuntu
+    │       ├── minecraft.service
+    │       ├── minecraft-sync.path
+    │       ├── minecraft-sync.service
+    │       └── minecraft-playit-bridge.service
+    │
+    └── tools/                     # АВТОМАТИЧЕСКИЕ ИНСТРУМЕНТЫ ДЛЯ CLAUDE
+        ├── check_server.py        # Диагностика: пинг 25565, WAN, резервный туннель, CDN
+        ├── server_cmd.py          # Выполнение команд в консоли сервера и чтение логов
+        └── deploy_mod.py          # Авто-деплой мода: загрузка .jar, перезапуск, проверка логов
+```
 
-### Вариант 2: В обычном чате Claude
-Просто прикрепи файл `CLAUDE_PROMPT.md` (и нужные файлы из `CHATS/`) первым сообщением и напиши:
-> "Ознакомься с контекстом сервера ZubrCraft. Мне нужно написать новый мод: [описание идеи]."
+---
+
+## 🛠️ Инструменты автоматизации для Claude
+
+Когда Claude подключен через Claude Code, терминал или рабочий каталог, он может самостоятельно выполнять следующие команды для тестирования:
+
+1. **Проверить статус и доступность сервера:**
+   ```bash
+   python AI_CONTEXT/PROJECT_FILES/tools/check_server.py
+   ```
+   *Проверяет локальный сервер, домен `zubrcraft.fun`, Anycast туннель и CDN манифест.*
+
+2. **Отправить команду в серверную консоль Minecraft:**
+   ```bash
+   python AI_CONTEXT/PROJECT_FILES/tools/server_cmd.py "list"
+   python AI_CONTEXT/PROJECT_FILES/tools/server_cmd.py "say Привет из Claude!"
+   python AI_CONTEXT/PROJECT_FILES/tools/server_cmd.py "tab reload"
+   ```
+
+3. **Собрать, задеплоить и протестировать новый мод в один клик:**
+   ```bash
+   python AI_CONTEXT/PROJECT_FILES/tools/deploy_mod.py "path/to/my_new_mod.jar"
+   ```
+   *Скрипт автоматически:*
+   - Заливает `.jar` на сервер `unclebug@192.168.100.51:/home/unclebug/storage/minecraft/mods/`.
+   - Перезапускает службу `minecraft.service`.
+   - Слушает `latest.log` в реальном времени до готовности мира (`Done (X.Xs)`).
+   - В случае ошибок сразу читает свежий краш-репорт и выводит причину падения!
+
+---
+
+## 🚀 Как работать с Claude
+
+- **Для Claude Projects:** Загрузи папку `AI_CONTEXT` в Project Knowledge. В ней лежат как текстовые инструкции, так и реальные Java-исходники и конфиги.
+- **Для Claude Code CLI:** Claude прямо в терминале видит репозиторий, может запускать тесты через скрипты из папки `tools/` и деплоить моды на сервер.

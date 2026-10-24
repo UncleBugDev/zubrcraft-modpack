@@ -1,0 +1,357 @@
+package net.zubrcraft.auth.server;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.PacketDistributor;
+import net.zubrcraft.auth.ZubrCraftAuth;
+import net.zubrcraft.auth.network.AuthPromptPacket;
+import net.zubrcraft.auth.network.AuthResultPacket;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.lang.reflect.Type;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class AuthManager {
+    private static final Logger LOGGER = LogManager.getLogger("ZubrCraftAuth");
+    private static final AuthManager INSTANCE = new AuthManager();
+    public static AuthManager getInstance() { return INSTANCE; }
+
+    public static class UserData {
+        public String hash;
+        public String salt;
+        public String lastIp;
+        public long registeredAt;
+        public long lastLogin;
+    }
+
+    private final Map<String, UserData> users = new ConcurrentHashMap<>();
+    private final Set<UUID> authenticatedPlayers = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Integer> attempts = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastPromptSent = new ConcurrentHashMap<>();
+    private final Map<UUID, Vec3> pendingPositions = new ConcurrentHashMap<>();
+    private final Map<UUID, Float> pendingYaws = new ConcurrentHashMap<>();
+    private final Map<UUID, Float> pendingPitches = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> joinTimes = new ConcurrentHashMap<>();
+
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final File configFile = new File("config/zubrcraft_auth/users.json");
+
+    private AuthManager() {
+        loadUsers();
+    }
+
+    public synchronized void loadUsers() {
+        try {
+            if (!configFile.exists()) {
+                configFile.getParentFile().mkdirs();
+                saveUsers();
+                return;
+            }
+            try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
+                Type type = new TypeToken<Map<String, UserData>>(){}.getType();
+                Map<String, UserData> loaded = gson.fromJson(reader, type);
+                if (loaded != null) {
+                    users.clear();
+                    users.putAll(loaded);
+                }
+            }
+            LOGGER.info("Loaded " + users.size() + " registered users.");
+        } catch (Exception e) {
+            LOGGER.error("Failed to load users from " + configFile, e);
+        }
+    }
+
+    public synchronized void saveUsers() {
+        try {
+            configFile.getParentFile().mkdirs();
+            try (FileWriter writer = new FileWriter(configFile, StandardCharsets.UTF_8)) {
+                gson.toJson(users, writer);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to save users to " + configFile, e);
+        }
+    }
+
+    public Map<String, UserData> getUsers() {
+        return users;
+    }
+
+    public boolean isAuthenticated(ServerPlayer player) {
+        if (player == null) return false;
+        return authenticatedPlayers.contains(player.m_20148_());
+    }
+
+    public boolean isAuthenticatedUUID(UUID uuid) {
+        if (uuid == null) return false;
+        return authenticatedPlayers.contains(uuid);
+    }
+
+    public Vec3 getJoinPosition(UUID uuid) {
+        return pendingPositions.get(uuid);
+    }
+
+    public float getJoinYaw(UUID uuid) {
+        Float val = pendingYaws.get(uuid);
+        return val != null ? val : 0.0f;
+    }
+
+    public float getJoinPitch(UUID uuid) {
+        Float val = pendingPitches.get(uuid);
+        return val != null ? val : 0.0f;
+    }
+
+    public long getJoinTime(UUID uuid) {
+        Long val = joinTimes.get(uuid);
+        return val != null ? val : 0L;
+    }
+
+    public void onAuthenticated(ServerPlayer player) {
+        if (player == null) return;
+        UUID uuid = player.m_20148_();
+        authenticatedPlayers.add(uuid);
+        pendingPositions.remove(uuid);
+        pendingYaws.remove(uuid);
+        pendingPitches.remove(uuid);
+        joinTimes.remove(uuid);
+        attempts.remove(uuid);
+        lastPromptSent.remove(uuid);
+
+        // Remove blindness effect
+        player.m_21195_(MobEffects.f_19610_);
+    }
+
+    public void sendWelcome(ServerPlayer player) {
+        if (player == null) return;
+        String name = player.m_36316_().getName();
+
+        try {
+            // 1. Title & Subtitle with smooth fade animation
+            player.f_8906_.m_9829_(new ClientboundSetTitlesAnimationPacket(10, 60, 20));
+            player.f_8906_.m_9829_(new ClientboundSetTitleTextPacket(Component.m_237113_("§6§l★ ZubrCraft ★")));
+            player.f_8906_.m_9829_(new ClientboundSetSubtitleTextPacket(Component.m_237113_("§fДобро пожаловать, §e" + name + "§f!")));
+
+            // 2. Play level-up chime sound locally for player
+            player.m_5496_(SoundEvents.f_12275_, 0.7f, 1.2f);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to send title/sound: " + e.getMessage());
+        }
+
+        // 3. Beautiful private chat banner (visible ONLY to this player)
+        player.m_213846_(Component.m_237113_("§6§m--------------------------------------------------"));
+        player.m_213846_(Component.m_237113_("§e       ★ §6§lДОБРО ПОЖАЛОВАТЬ НА ZUBRCRAFT §e★"));
+        player.m_213846_(Component.m_237113_("§7  • Игрок: §f" + name));
+        player.m_213846_(Component.m_237113_("§7  • Сайт сервера: §fhttps://zubrcraft.fun"));
+        player.m_213846_(Component.m_237113_("§7  • Голосовой чат: нажмите клавишу §e[V]§7 или §e[H]"));
+        player.m_213846_(Component.m_237113_("§7  • Желаем приятной и комфортной игры!"));
+        player.m_213846_(Component.m_237113_("§6§m--------------------------------------------------"));
+    }
+
+    public void removePlayer(ServerPlayer player) {
+        if (player != null) {
+            UUID uuid = player.m_20148_();
+            authenticatedPlayers.remove(uuid);
+            pendingPositions.remove(uuid);
+            pendingYaws.remove(uuid);
+            pendingPitches.remove(uuid);
+            joinTimes.remove(uuid);
+            attempts.remove(uuid);
+            lastPromptSent.remove(uuid);
+        }
+    }
+
+    public String getPlayerIP(ServerPlayer player) {
+        try {
+            if (player.f_8906_ != null && player.f_8906_.f_9742_ != null) {
+                SocketAddress addr = player.f_8906_.f_9742_.m_129523_();
+                if (addr instanceof InetSocketAddress inet) {
+                    if (inet.getAddress() != null) {
+                        return inet.getAddress().getHostAddress();
+                    }
+                    return inet.getHostString();
+                } else if (addr != null) {
+                    String s = addr.toString();
+                    if (s.startsWith("/")) s = s.substring(1);
+                    int colon = s.indexOf(':');
+                    return colon > 0 ? s.substring(0, colon) : s;
+                }
+            }
+        } catch (Exception ignored) {}
+        return "127.0.0.1";
+    }
+
+    public void onPlayerJoin(ServerPlayer player) {
+        String username = player.m_36316_().getName().toLowerCase(Locale.ROOT);
+        UserData user = users.get(username);
+        String currentIp = getPlayerIP(player);
+        UUID uuid = player.m_20148_();
+
+        if (user != null && currentIp.equals(user.lastIp)) {
+            // Same IP: Seamless automatic background authentication!
+            onAuthenticated(player);
+            user.lastLogin = System.currentTimeMillis();
+            saveUsers();
+            sendResult(player, true, "Авторизация успешна!");
+            sendWelcome(player);
+        } else {
+            // Unauthenticated: lock and prompt
+            authenticatedPlayers.remove(uuid);
+            pendingPositions.put(uuid, player.m_20182_());
+            pendingYaws.put(uuid, player.m_146908_());
+            pendingPitches.put(uuid, player.m_146909_());
+            joinTimes.put(uuid, System.currentTimeMillis());
+
+            // Apply blindness
+            player.m_7292_(new MobEffectInstance(MobEffects.f_19610_, 20 * 120, 1, false, false, false));
+
+            if (user == null) {
+                sendPrompt(player, 0, "");
+                player.m_213846_(Component.m_237113_("§e[ZubrCraft] Пожалуйста, зарегистрируйтесь через появившееся окно!"));
+            } else {
+                sendPrompt(player, 1, "Вход с нового IP адреса (" + currentIp + ")");
+                player.m_213846_(Component.m_237113_("§e[ZubrCraft] Обнаружен вход с нового IP (" + currentIp + "). Пожалуйста, введите пароль."));
+            }
+        }
+    }
+
+    public boolean processAuth(UUID uuid, String username, String currentIp, int mode, String password, String confirm, StringBuilder errorOut) {
+        String userKey = username.toLowerCase(Locale.ROOT);
+        UserData user = users.get(userKey);
+
+        if (mode == 0) { // REGISTER
+            if (user != null) {
+                if (errorOut != null) errorOut.append("§cАккаунт уже зарегистрирован! Введите пароль.");
+                return false;
+            }
+            if (password == null || password.trim().length() < 4) {
+                if (errorOut != null) errorOut.append("§cПароль должен быть не менее 4 символов!");
+                return false;
+            }
+            if (!password.equals(confirm)) {
+                if (errorOut != null) errorOut.append("§cПароли не совпадают!");
+                return false;
+            }
+
+            user = new UserData();
+            user.salt = generateSalt();
+            user.hash = hashPassword(password, user.salt);
+            user.lastIp = currentIp;
+            user.registeredAt = System.currentTimeMillis();
+            user.lastLogin = user.registeredAt;
+            users.put(userKey, user);
+            saveUsers();
+
+            return true;
+        } else if (mode == 1) { // LOGIN
+            if (user == null) {
+                if (errorOut != null) errorOut.append("§cАккаунт не найден! Пожалуйста, зарегистрируйтесь.");
+                return false;
+            }
+
+            String computed = hashPassword(password, user.salt);
+            if (computed.equals(user.hash)) {
+                user.lastIp = currentIp;
+                user.lastLogin = System.currentTimeMillis();
+                saveUsers();
+
+                return true;
+            } else {
+                int count = attempts.getOrDefault(uuid, 0) + 1;
+                attempts.put(uuid, count);
+                if (errorOut != null) {
+                    if (count >= 5) {
+                        errorOut.append("§cПревышено количество попыток ввода пароля.");
+                    } else {
+                        errorOut.append("§cНеверный пароль! Осталось попыток: " + (5 - count));
+                    }
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public void handleAuthSubmit(ServerPlayer player, int mode, String password, String confirm) {
+        String username = player.m_36316_().getName();
+        String currentIp = getPlayerIP(player);
+        UUID uuid = player.m_20148_();
+        StringBuilder error = new StringBuilder();
+
+        boolean ok = processAuth(uuid, username, currentIp, mode, password, confirm, error);
+        if (ok) {
+            onAuthenticated(player);
+            sendResult(player, true, mode == 0 ? "Регистрация успешна!" : "Авторизация успешна!");
+            sendWelcome(player);
+        } else {
+            if (attempts.getOrDefault(uuid, 0) >= 5) {
+                player.f_8906_.m_9942_(Component.m_237113_(error.toString()));
+            } else {
+                sendPrompt(player, mode, error.toString());
+            }
+        }
+    }
+
+    public void checkPlayerScreen(ServerPlayer player) {
+        if (!isAuthenticated(player)) {
+            long now = System.currentTimeMillis();
+            long last = lastPromptSent.getOrDefault(player.m_20148_(), 0L);
+            if (now - last > 3000) {
+                String username = player.m_36316_().getName().toLowerCase(Locale.ROOT);
+                int mode = users.containsKey(username) ? 1 : 0;
+                sendPrompt(player, mode, "");
+            }
+        }
+    }
+
+    public void sendPrompt(ServerPlayer player, int mode, String errorMsg) {
+        lastPromptSent.put(player.m_20148_(), System.currentTimeMillis());
+        ZubrCraftAuth.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new AuthPromptPacket(mode, errorMsg));
+    }
+
+    public void sendResult(ServerPlayer player, boolean success, String message) {
+        ZubrCraftAuth.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new AuthResultPacket(success, message));
+    }
+
+    public static String hashPassword(String password, String salt) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] b = md.digest((password + salt).getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte x : b) {
+                sb.append(String.format("%02x", x));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String generateSalt() {
+        byte[] b = new byte[16];
+        new SecureRandom().nextBytes(b);
+        StringBuilder sb = new StringBuilder();
+        for (byte x : b) {
+            sb.append(String.format("%02x", x));
+        }
+        return sb.toString();
+    }
+}

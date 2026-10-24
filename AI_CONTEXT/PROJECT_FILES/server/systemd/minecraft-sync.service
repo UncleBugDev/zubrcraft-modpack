@@ -1,0 +1,8 @@
+[Unit]
+Description=Auto-sync Minecraft mods to CDN manifest
+After=network.target
+
+[Service]
+Type=oneshot
+User=unclebug
+ExecStart=/usr/bin/python3 /home/unclebug/storage/minecraft/update_sync.py

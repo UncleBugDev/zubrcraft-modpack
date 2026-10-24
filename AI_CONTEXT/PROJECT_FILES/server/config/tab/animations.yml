@@ -1,0 +1,29 @@
+# Animations for TAB plugin on ZubrCraft
+ZubrLogo:
+  change-interval: 200
+  texts:
+    - "<#2ECC71>&lZ<#27AE60>&lU<#1ABC9C>&lB<#16A085>&lR<#F39C12>&lC<#E67E22>&lR<#D35400>&lA<#F1C40F>&lF<#2ECC71>&lT"
+    - "<#27AE60>&lZ<#1ABC9C>&lU<#16A085>&lB<#F39C12>&lR<#E67E22>&lC<#D35400>&lR<#F1C40F>&lA<#2ECC71>&lF<#27AE60>&lT"
+    - "<#1ABC9C>&lZ<#16A085>&lU<#F39C12>&lB<#E67E22>&lR<#D35400>&lC<#F1C40F>&lA<#2ECC71>&lF<#27AE60>&lT<#1ABC9C>&l "
+    - "<#16A085>&lZ<#F39C12>&lU<#E67E22>&lB<#D35400>&lR<#F1C40F>&lC<#2ECC71>&lR<#27AE60>&lA<#1ABC9C>&lF<#16A085>&lT"
+    - "<#F39C12>&lZ<#E67E22>&lU<#D35400>&lB<#F1C40F>&lR<#2ECC71>&lC<#27AE60>&lR<#1ABC9C>&lA<#16A085>&lF<#F39C12>&lT"
+    - "<#E67E22>&lZ<#D35400>&lU<#F1C40F>&lB<#2ECC71>&lR<#27AE60>&lC<#1ABC9C>&lA<#16A085>&lF<#F39C12>&lT<#E67E22>&l "
+    - "<#D35400>&lZ<#F1C40F>&lU<#2ECC71>&lB<#27AE60>&lR<#1ABC9C>&lC<#16A085>&lR<#F39C12>&lA<#E67E22>&lF<#D35400>&lT"
+    - "<#F1C40F>&lZ<#2ECC71>&lU<#27AE60>&lB<#1ABC9C>&lR<#16A085>&lC<#F39C12>&lR<#E67E22>&lA<#D35400>&lF<#F1C40F>&lT"
+
+LineBottom:
+  change-interval: 250
+  texts:
+    - "<#2ECC71>&m                                                  </#F39C12>"
+    - "<#27AE60>&m                                                  </#E67E22>"
+    - "<#1ABC9C>&m                                                  </#D35400>"
+    - "<#16A085>&m                                                  </#F1C40F>"
+    - "<#F39C12>&m                                                  </#2ECC71>"
+    - "<#E67E22>&m                                                  </#27AE60>"
+    - "<#D35400>&m                                                  </#1ABC9C>"
+    - "<#F1C40F>&m                                                  </#16A085>"
+
+time:
+  change-interval: 3000
+  texts:
+    - '%time%'

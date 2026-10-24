@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch Minecraft mods folder for changes
+
+[Path]
+PathModified=/home/unclebug/storage/minecraft/mods
+Unit=minecraft-sync.service
+
+[Install]
+WantedBy=multi-user.target

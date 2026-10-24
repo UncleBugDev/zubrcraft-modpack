@@ -1,0 +1,12 @@
+[Unit]
+Description=Minecraft Playit Bridge 25566 to 25565
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socat TCP-LISTEN:25566,fork,reuseaddr TCP:127.0.0.1:25565
+Restart=always
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
