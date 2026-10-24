@@ -1,113 +1,141 @@
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Header-&-Footer
 header-footer:
   enabled: true
   designs:
     default:
       header:
-      - '%animation:LineBottom%'
-      - '  &r%animation:ZubrLogo%  '
-      - '&8» &fЛамповый сервер выживания &8«'
-      - ''
-      - '&7Привет, &a%player%&7! Приятной игры!'
-      - '&7Онлайн: &a%online%&7/&220 &8| &7Мир: &e%world% &8| &7TPS: &a%tps%'
-      - ''
+        - "%animation:LineBottom%"
+        - "  &r%animation:ZubrLogo%  "
+        - "&8» &fЛамповый сервер выживания &8«"
+        - ""
+        - "&7Привет, &a%player%&7! Приятной игры!"
+        - "&7Онлайн: &a%online%&7/&220 &8| &7Мир: %world%%condition:tps_view%"
+        - ""
       footer:
-      - ''
-      - '&7Пинг: &a%ping%&7ms &8| &7Память: &b%memory-used%&7MB &8| &7Время: &e%time%'
-      - '&8[&a✦&8] &7Основной IP: &bzubrcraft.fun &8| &7Резерв: &6vivo-whomever.tun.ply.gg:43020'
-      - '&8[&a✦&8] &7Голосовой чат: &aSimple Voice Chat &8(Кнопка ''V'')'
-      - '%animation:LineBottom%'
+        - ""
+        - "&7Пинг: &a%ping%&7ms &8| &7Память: &b%memory-used%&7MB &8| &7Время: &e%time%"
+        - "&8[&a✦&8] &7Адрес сервера: &bzubrcraft.fun"
+        - "&8[&a✦&8] &7Голосовой чат: &aSimple Voice Chat &8(Кнопка 'V')"
+        - "%animation:LineBottom%"
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Tablist-name-formatting
 tablist-name-formatting:
   enabled: true
   disable-condition: '%world%=disabledworld'
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Nametags
 scoreboard-teams:
   enabled: true
   enable-collision: true
   invisible-nametags: false
   sorting-types:
-  - GROUPS:owner,admin,mod,helper,builder,vip,default
-  - PLACEHOLDER_A_TO_Z:%player%
+    - "GROUPS:owner,admin,mod,helper,builder,vip,default"
+    - "PLACEHOLDER_A_TO_Z:%player%"
   case-sensitive-sorting: true
   can-see-friendly-invisibles: false
   disable-condition: '%world%=disabledworld'
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Playerlist-Objective
 playerlist-objective:
   enabled: true
-  value: '%ping%'
-  fancy-value: '&a%ping%&7ms'
-  title: TAB
+  value: "%ping%"
+  fancy-value: "&a%ping%&7ms"
+  title: "TAB"
   render-type: INTEGER
   disable-condition: '%world%=disabledworld'
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Belowname
 belowname-objective:
   enabled: false
-  value: '%health%'
-  fancy-value: '&c%health%'
-  fancy-value-default: NPC
-  title: '&cHealth'
+  value: "%health%"
+  fancy-value: "&c%health%"
+  fancy-value-default: "NPC"
+  title: "&cHealth"
   disable-condition: '%world%=disabledworld'
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Spectator-fix
 prevent-spectator-effect:
   enabled: false
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Bossbar
 bossbar:
   enabled: false
-  toggle-command: /bossbar
-  remember-toggle-choice: false
-  hidden-by-default: false
-  bars:
-    ServerInfo:
-      style: PROGRESS
-      color: GREEN
-      progress: '100'
-      text: '&fСайт: &bzubrcraft.fun'
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Scoreboard
 scoreboard:
   enabled: false
-  toggle-command: /sb
-  remember-toggle-choice: false
-  hidden-by-default: false
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Layout
 layout:
   enabled: false
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Ping-Spoof
 ping-spoof:
   enabled: false
   value: 0
+
+# https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Global-playerlist
 global-playerlist:
   enabled: false
-  update-latency: false
+
 placeholders:
-  date-format: dd.MM.yyyy
-  time-format: HH:mm:ss
+  date-format: "dd.MM.yyyy"
+  time-format: "HH:mm:ss"
   time-offset: 3
   register-tab-expansion: false
+
+# Замена технических названий миров на красивые русские
 placeholder-output-replacements:
-  '%essentials_vanished%':
-    'yes': '&7| Vanished'
-    'no': ''
+  "%world%":
+    "world": "&aВерхний мир"
+    "minecraft:overworld": "&aВерхний мир"
+    "overworld": "&aВерхний мир"
+    "world_nether": "&cНижний мир (Ад)"
+    "minecraft:the_nether": "&cНижний мир (Ад)"
+    "the_nether": "&cНижний мир (Ад)"
+    "DIM-1": "&cНижний мир (Ад)"
+    "nether": "&cНижний мир (Ад)"
+    "world_the_end": "&dКрай (Энд)"
+    "minecraft:the_end": "&dКрай (Энд)"
+    "the_end": "&dКрай (Энд)"
+    "DIM1": "&dКрай (Энд)"
+    "end": "&dКрай (Энд)"
+
+# Условия: TPS виден только тем, у кого есть права OP / staff
 conditions:
-  nick:
+  tps_view:
     conditions:
-    - '%player%=%essentials_nickname%'
-    true: '%player%'
-    false: ~%essentials_nickname%
+      - "permission:tab.staff"
+    true: " &8| &7TPS: &a%tps%"
+    false: ""
+
 placeholder-refresh-intervals:
   default-refresh-interval: 500
-  '%server_uptime%': 1000
-  '%server_tps_1_colored%': 1000
-  '%player_health%': 200
-  '%player_ping%': 1000
+  "%server_uptime%": 1000
+  "%server_tps_1_colored%": 1000
+  "%player_health%": 200
+  "%player_ping%": 1000
+
 assign-groups-by-permissions: false
 primary-group-finding-list:
-- Owner
-- Admin
-- Mod
-- Helper
-- default
+  - Owner
+  - Admin
+  - Mod
+  - Helper
+  - default
+
 permission-refresh-interval: 1000
 debug: false
+
 mysql:
   enabled: false
+
 proxy-support:
   enabled: false
+
 components:
   minimessage-support: true
   disable-shadow-for-heads: true
+
 config-version: 5
 use-online-uuid-in-tablist: true
-compensate-for-packetevents-bug: false
-per-world-playerlist:
-  enabled: false
