@@ -132,7 +132,7 @@
       font-size: 15px;
     }
     
-    /* кнопки скачивания */
+    /* кнопки и ссылки */
     .knopki-ryad {
       display: flex;
       flex-wrap: wrap;
@@ -144,13 +144,14 @@
       border: 1px solid #22c55e;
       color: #ffffff;
       text-decoration: none;
-      padding: 14px 22px;
+      padding: 12px 20px;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 16px;
+      font-size: 15px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      cursor: pointer;
       transition: 0.15s;
     }
     .skachat-knopka:hover {
@@ -164,6 +165,14 @@
     .skachat-knopka.fioletovaya:hover {
       background: #6d28d9;
     }
+    .skachat-knopka.seraya {
+      background: #374151;
+      border-color: #4b5563;
+      color: #e5e7eb;
+    }
+    .skachat-knopka.seraya:hover {
+      background: #4b5563;
+    }
 
     /* подсказки и пути */
     .kod-stroka {
@@ -176,6 +185,7 @@
       font-size: 14px;
       display: inline-block;
       margin: 4px 0;
+      word-break: break-all;
     }
     .zelenoe-info {
       background: #13241b;
@@ -185,6 +195,28 @@
       margin: 14px 0;
       color: #dcfce7;
       font-size: 14px;
+    }
+
+    /* плашка копирования ссылки */
+    .kopirovat-box {
+      background: #090c0e;
+      border: 1px solid #374151;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 12px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .kopirovat-url-text {
+      font-family: monospace;
+      font-size: 13px;
+      color: #93c5fd;
+      word-break: break-all;
+      background: #151a1e;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px dashed #2563eb;
     }
 
     /* вопросы и ответы */
@@ -239,44 +271,51 @@
 
   <!-- Переключалка лаунчеров -->
   <div class="vybor-launchera">
-    <button class="knopka-tab active" onclick="pokazatVkladku('prism')">Prism Launcher (Самый простой способ)</button>
-    <button class="knopka-tab" onclick="pokazatVkladku('tlauncher')">TLauncher / Обычные</button>
+    <button class="knopka-tab active" onclick="pokazatVkladku('prism')">Prism / PineconeMC (Самый легкий способ)</button>
+    <button class="knopka-tab" onclick="pokazatVkladku('tlauncher')">TLauncher / Обычные лаунчеры</button>
   </div>
 
-  <!-- Вариант 1: Prism Launcher (В 1 КЛИК) -->
+  <!-- Вариант 1: Prism Launcher / PineconeMC (ПО ССЫЛКЕ В 1 КЛИК) -->
   <div id="vkladka-prism">
     <div class="shag-kartochka">
       <span class="nomer-shaga">1</span>
-      <h2>Скачиваем готовую сборку для Призмы</h2>
-      <p>Жми кнопку и скачай один файл инстанса:</p>
-      <div class="knopki-ryad">
-        <a class="skachat-knopka fioletovaya" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/ZubrCraft-Prism.zip">
-          Скачать ZubrCraft-Prism.zip (27 МБ)
-        </a>
+      <h2>Копируем ссылку на сборку</h2>
+      <p>В Prism Launcher и PineconeMC даже не нужно скачивать файл на компьютер. Просто жми кнопку:</p>
+      
+      <div class="kopirovat-box">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <button class="skachat-knopka fioletovaya" id="btnKopirovatPrism" onclick="skopirovatPrismLink()">
+            📋 Скопировать ссылку для лаунчера
+          </button>
+          <a class="skachat-knopka seraya" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/ZubrCraft-Prism.zip">
+            Или скачать файлом zip (27 МБ)
+          </a>
+        </div>
+        <div class="kopirovat-url-text" id="prismUrlText">https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/ZubrCraft-Prism.zip</div>
       </div>
-      <p style="margin-top: 8px;">(Внутри уже настроена Java 17, Forge 1.20.1, выделено 4 ГБ памяти, стоят моды на высокий FPS и авто-апдейтер).</p>
     </div>
 
     <div class="shag-kartochka">
       <span class="nomer-shaga">2</span>
-      <h2>Импорт в Призму за 2 секунды</h2>
+      <h2>Вставляем ссылку в лаунчер</h2>
       <ol style="margin-left: 20px; margin-bottom: 12px;">
-        <li style="margin-bottom: 6px;">Открой <b>Prism Launcher</b>.</li>
-        <li style="margin-bottom: 6px;">В верхнем левом углу нажми кнопку <b>«Добавить сборку»</b> (Add Instance).</li>
-        <li style="margin-bottom: 6px;">Слева выбери вкладку <b>«Импорт из zip»</b> (Import from zip).</li>
-        <li style="margin-bottom: 6px;">Выбери скачанный файл <b>ZubrCraft-Prism.zip</b> и нажми <b>ОК</b>.</li>
+        <li style="margin-bottom: 6px;">Открой <b>Prism Launcher</b> (или PineconeMC).</li>
+        <li style="margin-bottom: 6px;">В левом верхнем углу нажми <b>«Добавить сборку»</b> (Add Instance).</li>
+        <li style="margin-bottom: 6px;">Слева выбери вкладку <b>«Импорт»</b> (Import).</li>
+        <li style="margin-bottom: 6px;">В поле <b>«Ссылка для загрузки (http://)»</b> вставь скопированную ссылку (Ctrl + V).</li>
+        <li style="margin-bottom: 6px;">Нажми <b>ОК</b>.</li>
       </ol>
       <div class="zelenoe-info">
-        <b>Всё готово!</b> Призма сама создаст отдельный профиль ZubrCraft со всеми настройками.
+        <b>Лаунчер сделает всё сам!</b> Он моментально скачает сборку из интернета, сам настроит Forge 1.20.1, выделит 4 ГБ памяти и назовёт профиль <b>ZubrCraft</b>.
       </div>
     </div>
 
     <div class="shag-kartochka">
       <span class="nomer-shaga">3</span>
-      <h2>Запуск и вход</h2>
-      <p>Жми кнопку «Запустить» в Призме. В меню игры заходи в «Сетевая игра» -> «По адресу» и пиши:</p>
+      <h2>Запуск и игра</h2>
+      <p>Жми кнопку «Запустить» в лаунчере. В игре жми «Сетевая игра» -> «По адресу» и вводи:</p>
       <div class="kod-stroka">zubrcraft.fun</div>
-      <p style="margin-top: 8px;">Встроенный мод AutoModpack при первом входе сам докачает недостающие блоки и декорации с сервера и перезапустит игру. Настройка микрофона в игре - клавиша <b>V</b>.</p>
+      <p style="margin-top: 8px;">При первом входе встроенный AutoModpack сам за 10-15 секунд докачает блоки и декорации с сервера и перезапустит игру. Клавиша настройки микрофона в игре - <b>V</b>.</p>
     </div>
   </div>
 
@@ -311,7 +350,7 @@
     <div class="shag-kartochka">
       <span class="nomer-shaga">4</span>
       <h2>Вход на сервер</h2>
-      <p>Запускай Forge 1.20.1 и подключайся по адресу <b>zubrcraft.fun</b>. Мод AutoModpack сам докачает серверные моды при входе.</p>
+      <p>Запускай Forge 1.20.1 и подключайся по адресу <b>zubrcraft.fun</b>. Мод AutoModpack сам всё докачает при первом входе.</p>
     </div>
   </div>
 
@@ -356,6 +395,21 @@
       }, 2000);
     }).catch(function() {
       alert("Не получилось скопировать автоматически, адрес: " + ip);
+    });
+  }
+
+  function skopirovatPrismLink() {
+    var url = document.getElementById("prismUrlText").innerText;
+    navigator.clipboard.writeText(url).then(function() {
+      var btn = document.getElementById("btnKopirovatPrism");
+      btn.innerText = "✅ Ссылка скопирована!";
+      btn.style.background = "#16a34a";
+      setTimeout(function() {
+        btn.innerText = "📋 Скопировать ссылку для лаунчера";
+        btn.style.background = "#7c3aed";
+      }, 2500);
+    }).catch(function() {
+      alert("Скопируй ссылку вручную: " + url);
     });
   }
 
