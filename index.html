@@ -72,6 +72,33 @@
       border-radius: 4px;
     }
 
+    /* переключалка лаунчеров */
+    .vybor-launchera {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: #171b1f;
+      padding: 6px;
+      border-radius: 10px;
+      border: 1px solid #282f37;
+    }
+    .knopka-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      padding: 10px 14px;
+      font-size: 15px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .knopka-tab.active {
+      background: #282f37;
+      color: #4ade80;
+    }
+
     /* карточки с шагами */
     .shag-kartochka {
       background: #171b1f;
@@ -129,6 +156,13 @@
     .skachat-knopka:hover {
       background: #15803d;
       transform: translateY(-2px);
+    }
+    .skachat-knopka.fioletovaya {
+      background: #7c3aed;
+      border-color: #8b5cf6;
+    }
+    .skachat-knopka.fioletovaya:hover {
+      background: #6d28d9;
     }
 
     /* подсказки и пути */
@@ -194,7 +228,7 @@
   <!-- Шапка -->
   <div class="glav-header">
     <h1>ZubrCraft</h1>
-    <div class="podzagolovok">Установка модов в 2 клика. Моды сами скачиваются и обновляются прямо в игре!</div>
+    <div class="podzagolovok">Установка сборки в 1 клик. Моды сами скачиваются и обновляются прямо в игре!</div>
     
     <div class="ip-polka" onclick="skopirovatIp()" title="Кликни чтобы скопировать">
       <span>IP сервера:</span>
@@ -203,52 +237,85 @@
     </div>
   </div>
 
-  <!-- Шаг 1 -->
-  <div class="shag-kartochka">
-    <span class="nomer-shaga">1</span>
-    <h2>Выбираем версию в лаунчере</h2>
-    <p>Открывай свой лаунчер (TLauncher, Legacy, Prism, официальный и т.д.). В списке версий выбирай строго:</p>
-    <div class="kod-stroka">Forge 1.20.1</div>
-    <p style="margin-top: 8px;">(Чистый Forge 1.20.1, без OptiFine! Оптимизация и поддержка шейдеров уже встроены внутри сборки).</p>
+  <!-- Переключалка лаунчеров -->
+  <div class="vybor-launchera">
+    <button class="knopka-tab active" onclick="pokazatVkladku('prism')">Prism Launcher (Самый простой способ)</button>
+    <button class="knopka-tab" onclick="pokazatVkladku('tlauncher')">TLauncher / Обычные</button>
   </div>
 
-  <!-- Шаг 2 -->
-  <div class="shag-kartochka">
-    <span class="nomer-shaga">2</span>
-    <h2>Скачиваем основу с авто-апдейтером</h2>
-    <p>Жми зеленую кнопку и скачай стартовый архив. Там лежит мод <b>AutoModpack</b> и оптимизация для высокого FPS:</p>
-    <div class="knopki-ryad">
-      <a class="skachat-knopka" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/1_ZubrCraft_Optimization_Base.zip">
-        Скачать сборку (27 МБ)
-      </a>
+  <!-- Вариант 1: Prism Launcher (В 1 КЛИК) -->
+  <div id="vkladka-prism">
+    <div class="shag-kartochka">
+      <span class="nomer-shaga">1</span>
+      <h2>Скачиваем готовую сборку для Призмы</h2>
+      <p>Жми кнопку и скачай один файл инстанса:</p>
+      <div class="knopki-ryad">
+        <a class="skachat-knopka fioletovaya" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/ZubrCraft-Prism.zip">
+          Скачать ZubrCraft-Prism.zip (27 МБ)
+        </a>
+      </div>
+      <p style="margin-top: 8px;">(Внутри уже настроена Java 17, Forge 1.20.1, выделено 4 ГБ памяти, стоят моды на высокий FPS и авто-апдейтер).</p>
+    </div>
+
+    <div class="shag-kartochka">
+      <span class="nomer-shaga">2</span>
+      <h2>Импорт в Призму за 2 секунды</h2>
+      <ol style="margin-left: 20px; margin-bottom: 12px;">
+        <li style="margin-bottom: 6px;">Открой <b>Prism Launcher</b>.</li>
+        <li style="margin-bottom: 6px;">В верхнем левом углу нажми кнопку <b>«Добавить сборку»</b> (Add Instance).</li>
+        <li style="margin-bottom: 6px;">Слева выбери вкладку <b>«Импорт из zip»</b> (Import from zip).</li>
+        <li style="margin-bottom: 6px;">Выбери скачанный файл <b>ZubrCraft-Prism.zip</b> и нажми <b>ОК</b>.</li>
+      </ol>
+      <div class="zelenoe-info">
+        <b>Всё готово!</b> Призма сама создаст отдельный профиль ZubrCraft со всеми настройками.
+      </div>
+    </div>
+
+    <div class="shag-kartochka">
+      <span class="nomer-shaga">3</span>
+      <h2>Запуск и вход</h2>
+      <p>Жми кнопку «Запустить» в Призме. В меню игры заходи в «Сетевая игра» -> «По адресу» и пиши:</p>
+      <div class="kod-stroka">zubrcraft.fun</div>
+      <p style="margin-top: 8px;">Встроенный мод AutoModpack при первом входе сам докачает недостающие блоки и декорации с сервера и перезапустит игру. Настройка микрофона в игре - клавиша <b>V</b>.</p>
     </div>
   </div>
 
-  <!-- Шаг 3 -->
-  <div class="shag-kartochka">
-    <span class="nomer-shaga">3</span>
-    <h2>Распаковываем в папку игры</h2>
-    <ol style="margin-left: 20px; margin-bottom: 12px;">
-      <li style="margin-bottom: 6px;">На клавиатуре нажми одновременно: <b>Win</b> (кнопка с флажком) и букву <b>R</b>.</li>
-      <li style="margin-bottom: 6px;">В появившемся окне вставь: <div class="kod-stroka">%appdata%\.minecraft</div> и нажми <b>Enter</b>.</li>
-      <li style="margin-bottom: 6px;">Открой скачанный архив и просто перетащи из него <b>папку mods</b> в открывшуюся папку `.minecraft`. Если спросит про замену файлов - подтверждай.</li>
-    </ol>
-  </div>
-
-  <!-- Шаг 4 -->
-  <div class="shag-kartochka">
-    <span class="nomer-shaga">4</span>
-    <h2>Заходим в игру и смотрим магию!</h2>
-    <p>Запускай версию <b>Forge 1.20.1</b>. Заходи в «Сетевая игра» -> «По адресу» и пиши:</p>
-    <div class="kod-stroka">zubrcraft.fun</div>
-    <div class="zelenoe-info">
-      <b>Как работает автообновление:</b><br>
-      При первом подключении встроенный мод AutoModpack сам покажет шкалу загрузки на экране Minecraft, за 10-15 секунд скачает недостающие моды сервера и перезапустит игру. Когда мы добавим новые моды на сервер - тебе ничего не придется перекачивать, игра сама всё обновит прямо на лету!
+  <!-- Вариант 2: Обычные лаунчеры (TLauncher, Legacy) -->
+  <div id="vkladka-tlauncher" style="display: none;">
+    <div class="shag-kartochka">
+      <span class="nomer-shaga">1</span>
+      <h2>Версия в лаунчере</h2>
+      <p>В списке версий выбирай строго чистый <b>Forge 1.20.1</b> (без OptiFine!).</p>
     </div>
-    <p>В игре нажми клавишу <b>V</b> (английскую), чтобы настроить микрофон для голосового чата.</p>
+
+    <div class="shag-kartochka">
+      <span class="nomer-shaga">2</span>
+      <h2>Скачиваем основу</h2>
+      <div class="knopki-ryad">
+        <a class="skachat-knopka" href="https://github.com/UncleBugDev/zubrcraft-modpack/releases/latest/download/1_ZubrCraft_Optimization_Base.zip">
+          Скачать основу (27 МБ)
+        </a>
+      </div>
+    </div>
+
+    <div class="shag-kartochka">
+      <span class="nomer-shaga">3</span>
+      <h2>Распаковываем в папку игры</h2>
+      <ol style="margin-left: 20px; margin-bottom: 12px;">
+        <li style="margin-bottom: 6px;">Нажми <b>Win + R</b> на клавиатуре.</li>
+        <li style="margin-bottom: 6px;">Введи <div class="kod-stroka">%appdata%\.minecraft</div> и нажми <b>Enter</b>.</li>
+        <li style="margin-bottom: 6px;">Перетащи скачанную <b>папку mods</b> в открывшуюся папку `.minecraft`.</li>
+      </ol>
+    </div>
+
+    <div class="shag-kartochka">
+      <span class="nomer-shaga">4</span>
+      <h2>Вход на сервер</h2>
+      <p>Запускай Forge 1.20.1 и подключайся по адресу <b>zubrcraft.fun</b>. Мод AutoModpack сам докачает серверные моды при входе.</p>
+    </div>
   </div>
 
-  <!-- Блок вопросов и ответов -->
+  <!-- Вопросы и ответы -->
   <div class="faq-shtuka">
     <h3 style="color: #f3f4f6; margin-bottom: 14px; font-size: 18px;">Частые вопросы и проблемы</h3>
     
@@ -290,6 +357,24 @@
     }).catch(function() {
       alert("Не получилось скопировать автоматически, адрес: " + ip);
     });
+  }
+
+  function pokazatVkladku(id) {
+    document.getElementById("vkladka-prism").style.display = "none";
+    document.getElementById("vkladka-tlauncher").style.display = "none";
+
+    var tabs = document.querySelectorAll(".knopka-tab");
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.remove("active");
+    }
+
+    if (id === "prism") {
+      document.getElementById("vkladka-prism").style.display = "block";
+      tabs[0].classList.add("active");
+    } else if (id === "tlauncher") {
+      document.getElementById("vkladka-tlauncher").style.display = "block";
+      tabs[1].classList.add("active");
+    }
   }
 </script>
 
